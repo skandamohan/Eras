@@ -1,12 +1,8 @@
 import random 
 import math
+import pandas
 
-# global row format 
-# 0   , 1  , 2   , 3   , 4   , 5   , 6   , 7 , 8   , 9     , 10,        , 11              , 12
-# year,0-12,12-24,24-36,36-48,48-60,60-72,72+,total, births, deaths(nat), deaths(conflict), conquestAdd
-
-def modifyGroups():
-  global totalPop, pop0To12, pop12To24, pop24To36 , pop36To48, pop48To60, pop60To72, pop72plus
+def updateRowWithLatestGroupPopulations(popDist, row):
   totalPop = 0
   pop0To12 = 0
   pop12To24 = 0
@@ -38,44 +34,54 @@ def modifyGroups():
       pop72plus = int(round(pop72plus + count))
       totalPop = totalPop + count
 
+  row['pop0To12'] = pop0To12
+  row['pop12To24'] = pop12To24
+  row['pop24To36'] = pop24To36
+  row['pop36To48'] = pop36To48
+  row['pop48To60'] = pop48To60
+  row['pop60To72'] = pop60To72
+  row['pop72plus'] = pop72plus
+  row['totalPop'] = totalPop 
+  return row
+
 def seed():
-  global popDist, year, births, deathsNat, deathsWar, conquestAdd
-  year = 0
-  deathsNat = 0
-  deathsWar = 0
-  births = 0
-  conquestAdd = 0
   #triangle curve distribution
   #popDist = [(i,random.randint(0,i/3)) for i in range(1,42)] + [(i,random.randint(0, max((84-(2*i))/3,1)))for i in range(42,84)]
   #pencil distribution
   popDist = [(i,random.randint(0,10)) for i in range(1,42)] + [(i,random.randint(0, max((84-(2*i))/3,1)))for i in range(42,84)]
-  modifyGroups()
+  row = {}
+  row['year'] = 0
+  row['deathsNat'] = 0
+  row['deathsWar'] = 0
+  row['births'] = 0
+  row['conquestAdd'] = 0
+  return popDist, updateRowWithLatestGroupPopulations(popDist, row)
 
-def conquest():
-  global popDist, deathsWar, conquestAdd
+# def conquest():
+#   global popDist, deathsWar, conquestAdd
 
-  combatPopRate = 0.25
-  combatPopSurvivalRate = 0.99
-  totalCombatPop = 0
-  popDist2 = []
-  for (age,count) in popDist: 
-    if(age >= 18 and age <= 60):
-      combatReady = int(round(count * combatPopRate))
-      remainers = count - combatReady
-      combatSurvivors = int(round(combatReady * combatPopSurvivalRate))
-      deathsWar = deathsWar + combatReady - combatSurvivors
-      totalCombatPop = totalCombatPop + combatSurvivors
-      totalSurvivors = combatSurvivors+remainers
-      popDist2 = popDist2 + [(age,totalSurvivors)]
+#   combatPopRate = 0.25
+#   combatPopSurvivalRate = 0.99
+#   totalCombatPop = 0
+#   popDist2 = []
+#   for (age,count) in popDist: 
+#     if(age >= 18 and age <= 60):
+#       combatReady = int(round(count * combatPopRate))
+#       remainers = count - combatReady
+#       combatSurvivors = int(round(combatReady * combatPopSurvivalRate))
+#       deathsWar = deathsWar + combatReady - combatSurvivors
+#       totalCombatPop = totalCombatPop + combatSurvivors
+#       totalSurvivors = combatSurvivors+remainers
+#       popDist2 = popDist2 + [(age,totalSurvivors)]
 
-  popDist3 = []
-  conquestRate = .01
-  for (age,count) in popDist2: 
-    if(age <= 36):
-      conquestCount = int(round(conquestRate * totalCombatPop))
-      conquestAdd = conquestAdd + conquestCount
-      popDist3 = popDist3 + [(age,count+conquestCount)]
-  popDist = popDist3
+#   popDist3 = []
+#   conquestRate = .01
+#   for (age,count) in popDist2: 
+#     if(age <= 36):
+#       conquestCount = int(round(conquestRate * totalCombatPop))
+#       conquestAdd = conquestAdd + conquestCount
+#       popDist3 = popDist3 + [(age,count+conquestCount)]
+#  popDist = popDist3
 
 #def war ():
 #def plague():
@@ -83,25 +89,26 @@ def conquest():
 #def rebellion():
 
 
-def addBabies(booster = 1):
-  global popDist, births
+def increaseAges(popDist):
+  popDist2 = []
+  for (age,count) in popDist: 
+    popDist2 = popDist2 + [(age+1,count)]
+  popDist = popDist2
+  return popDist
+
+def addBabies(popDist, row, booster = 1):
   fertile = 0
   birthRate = (random.randint(10,20)/100.0) * booster
   for (age,count) in popDist: 
     if(age >= 18 and age <= 36):
       fertile = fertile + count
-  births = round(fertile*birthRate)
-  popDist = popDist + [(1,births)]
+  row['births'] = int(round(fertile*birthRate))
+  popDist = popDist + [(1,row['births'])]
+  return popDist, row
 
-def increaseAges():
-  global popDist
-  popDist2 = []
-  for (age,count) in popDist: 
-    popDist2 = popDist2 + [(age+1,count)]
-  popDist = popDist2
 
-def removeDeaths():
-  global popDist, deathsNat
+def removeDeaths(popDist, row):
+  deathsNat = 0
   popDist2 = []
   childSurvival = random.randint(50,70)/100.0
   adultSurvival = random.randint(95,100)/100.0
@@ -116,34 +123,53 @@ def removeDeaths():
     else:
       popDist2 = popDist2 + [(age,int(round(count*(elderSurvival))))]
       deathsNat = deathsNat + count - int(round(count*elderSurvival))
+  row['deathsNat'] = deathsNat
   popDist = popDist2
+  return popDist, row
 
-def addYear(conquestYear = False):
-  global year, births, deathsNat, deathsWar, conquestAdd
-  births = 0
-  deathsNat = 0
-  deathsWar = 0
-  conquestAdd = 0
-  year = year + 1
-  increaseAges()
-  addBabies()
-  removeDeaths()
+def addYear(year, popDist, row, conquestYear = False):
+  row['year'] = year
+  popDist = increaseAges(popDist)
+  popDist, row = addBabies(popDist, row, booster = 2)
+  popDist, row = removeDeaths(popDist, row)
   if (conquestYear) :
     conquest()
-  modifyGroups()
+  row = updateRowWithLatestGroupPopulations(popDist, row)
+  return popDist, row
 
+def addRowToTable(table, row):
+  table.append([
+      row['year'], 
+      row['pop0To12'], 
+      row['pop12To24'], 
+      row['pop24To36'], 
+      row['pop36To48'], 
+      row['pop48To60'], 
+      row['pop60To72'], 
+      row['pop72plus'], 
+      row['totalPop'], 
+      row['births'], 
+      row['deathsNat']
+    ])
 
-def print_header():
-  print("year   0-12     12-24     24-36    36-48    48-60     60-72      72+      total      births      deaths(nat)       deaths(conflict)      conquestAdd")
+def print_table(table):
+  pandas.set_option('display.max_columns',None)
+  pandas.set_option('display.max_rows',None)
+  pandas.set_option('display.width',0)
+  df = pandas.DataFrame(
+    table, 
+    columns = 
+      ['year','pop0To12','pop12To24','pop24To36','pop36To48','pop48To60','pop60To72','pop72plus','totalPop','births','deathsNat']
+    )
+  print(df)
 
-def print_dist():
-  print("{}     {}       {}        {}        {}        {}        {}        {}        {}       {}          {}                {}        {}")\
-  .format(year, pop0To12, pop12To24, pop24To36, pop36To48, pop48To60, pop60To72, pop72plus, totalPop, births, deathsNat, deathsWar, conquestAdd)
 
 if __name__ == '__main__':
-  print_header()
-  seed()
-  print_dist()
-  for i in range(0,100) :
-    addYear(conquestYear = True)
-    print_dist()
+  popDist, row = seed()
+  table = []
+  addRowToTable(table, row)
+  for i in range(1,100) :
+    row = {}
+    popDist, row = addYear(i, popDist, row, conquestYear = False)
+    addRowToTable(table, row)
+  print_table(table)
