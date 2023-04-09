@@ -100,7 +100,7 @@ def addBabies(popDist, row, booster = 1):
   fertile = 0
   birthRate = (random.randint(10,20)/100.0) * booster
   for (age,count) in popDist: 
-    if(age >= 18 and age <= 36):
+    if(age >= 18 and age <= 40):
       fertile = fertile + count
   row['births'] = int(round(fertile*birthRate))
   popDist = popDist + [(1,row['births'])]
@@ -110,19 +110,25 @@ def addBabies(popDist, row, booster = 1):
 def removeDeaths(popDist, row):
   deathsNat = 0
   popDist2 = []
-  childSurvival = random.randint(50,70)/100.0
+  childSurvival = random.randint(80,90)/100.0
   adultSurvival = random.randint(95,100)/100.0
   elderSurvival = random.randint(25,30)/100.0
   for (age,count) in popDist: 
     if age < 12:
-      popDist2 = popDist2 + [(age,int(round(count*childSurvival)))]
-      deathsNat = deathsNat + count - int(round(count*childSurvival))
+      childrenSurvived = int(round(count*childSurvival))
+      childrenDied = count - childrenSurvived
+      popDist2 = popDist2 + [(age,childrenSurvived)]
+      deathsNat = deathsNat + childrenDied
     elif age >= 12 and age < 72:
-      popDist2 = popDist2 + [(age,int(round(count*(adultSurvival))))]
-      deathsNat = deathsNat + count - int(round(count*adultSurvival))
+      adultsSurvived = int(round(count*(adultSurvival)))
+      adultsDied = count - adultsSurvived
+      popDist2 = popDist2 + [(age, adultsSurvived)]
+      deathsNat = deathsNat + adultsDied
     else:
-      popDist2 = popDist2 + [(age,int(round(count*(elderSurvival))))]
-      deathsNat = deathsNat + count - int(round(count*elderSurvival))
+      eldersSurvived = int(round(count*(elderSurvival)))
+      eldersDied = count - eldersSurvived
+      popDist2 = popDist2 + [(age, eldersSurvived)]
+      deathsNat = deathsNat + eldersDied
   row['deathsNat'] = deathsNat
   popDist = popDist2
   return popDist, row
@@ -168,7 +174,7 @@ if __name__ == '__main__':
   popDist, row = seed()
   table = []
   addRowToTable(table, row)
-  for i in range(1,100) :
+  for i in range(1,500) :
     row = {}
     popDist, row = addYear(i, popDist, row, conquestYear = False)
     addRowToTable(table, row)
