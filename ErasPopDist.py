@@ -57,8 +57,21 @@ def seed():
   row['conquestAdd'] = 0
   return popDist, updateRowWithLatestGroupPopulations(popDist, row)
 
-# def conquest():
-#   global popDist, deathsWar, conquestAdd
+def conquest(popDist):
+  popDist2 = []
+  for(age, count) in popDist:
+    if (age < 40):
+      coinToss = random.randint(0,1)
+      if(coinToss == 0):
+        count = count+1;
+    popDist2 = popDist2 + [(age, count)]
+
+def isConquestYear(year):
+  if (year > 5):
+    coinToss = random.randint(0,1)
+    if(coinToss == 0):
+      return True
+  return False
 
 #   combatPopRate = 0.25
 #   combatPopSurvivalRate = 0.99
@@ -139,7 +152,7 @@ def addYear(year, popDist, row, conquestYear = False):
   popDist, row = addBabies(popDist, row, booster = 2)
   popDist, row = removeDeaths(popDist, row)
   if (conquestYear) :
-    conquest()
+    conquest(popDist)
   row = updateRowWithLatestGroupPopulations(popDist, row)
   return popDist, row
 
@@ -176,6 +189,6 @@ if __name__ == '__main__':
   addRowToTable(table, row)
   for i in range(1,500) :
     row = {}
-    popDist, row = addYear(i, popDist, row, conquestYear = False)
+    popDist, row = addYear(i, popDist, row, conquestYear = isConquestYear(i))
     addRowToTable(table, row)
   print_table(table)
