@@ -57,14 +57,17 @@ def seed():
   row['conquestAdd'] = 0
   return popDist, updateRowWithLatestGroupPopulations(popDist, row)
 
-def conquest(popDist):
+def conquest(popDist, row):
   popDist2 = []
+  conquestAdd = 0
   for(age, count) in popDist:
     if (age < 40):
       coinToss = random.randint(0,1)
       if(coinToss == 0):
-        count = count+1;
+        count = count+1
+        conquestAdd = conquestAdd+1
     popDist2 = popDist2 + [(age, count)]
+  row['conquestAdd'] = conquestAdd
 
 def isConquestYear(year):
   if (year > 5):
@@ -151,8 +154,9 @@ def addYear(year, popDist, row, conquestYear = False):
   popDist = increaseAges(popDist)
   popDist, row = addBabies(popDist, row, booster = 2)
   popDist, row = removeDeaths(popDist, row)
+  row['conquestAdd'] = 0
   if (conquestYear) :
-    conquest(popDist)
+    conquest(popDist, row)
   row = updateRowWithLatestGroupPopulations(popDist, row)
   return popDist, row
 
@@ -168,7 +172,8 @@ def addRowToTable(table, row):
       row['pop72plus'], 
       row['totalPop'], 
       row['births'], 
-      row['deathsNat']
+      row['deathsNat'],
+      row['conquestAdd']
     ])
 
 def print_table(table):
@@ -178,7 +183,7 @@ def print_table(table):
   df = pandas.DataFrame(
     table, 
     columns = 
-      ['year','pop0To12','pop12To24','pop24To36','pop36To48','pop48To60','pop60To72','pop72plus','totalPop','births','deathsNat']
+      ['year','pop0To12','pop12To24','pop24To36','pop36To48','pop48To60','pop60To72','pop72plus','totalPop','births','deathsNat','conquestAdd']
     )
   print(df)
 
