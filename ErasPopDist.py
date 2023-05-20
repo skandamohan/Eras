@@ -57,8 +57,24 @@ def seed():
   row['conquestAdd'] = 0
   return popDist, updateRowWithLatestGroupPopulations(popDist, row)
 
-# def conquest():
-#   global popDist, deathsWar, conquestAdd
+def conquest(popDist, row):
+  popDist2 = []
+  conquestAdd = 0
+  for(age, count) in popDist:
+    if (age < 40):
+      coinToss = random.randint(0,1)
+      if(coinToss == 0):
+        count = count+1
+        conquestAdd = conquestAdd+1
+    popDist2 = popDist2 + [(age, count)]
+  row['conquestAdd'] = conquestAdd
+
+def isConquestYear(year):
+  if (year > 5):
+    coinToss = random.randint(0,1)
+    if(coinToss == 0):
+      return True
+  return False
 
 #   combatPopRate = 0.25
 #   combatPopSurvivalRate = 0.99
@@ -138,8 +154,9 @@ def addYear(year, popDist, row, conquestYear = False):
   popDist = increaseAges(popDist)
   popDist, row = addBabies(popDist, row, booster = 2)
   popDist, row = removeDeaths(popDist, row)
+  row['conquestAdd'] = 0
   if (conquestYear) :
-    conquest()
+    conquest(popDist, row)
   row = updateRowWithLatestGroupPopulations(popDist, row)
   return popDist, row
 
@@ -155,7 +172,8 @@ def addRowToTable(table, row):
       row['pop72plus'], 
       row['totalPop'], 
       row['births'], 
-      row['deathsNat']
+      row['deathsNat'],
+      row['conquestAdd']
     ])
 
 def print_table(table):
@@ -165,7 +183,7 @@ def print_table(table):
   df = pandas.DataFrame(
     table, 
     columns = 
-      ['year','pop0To12','pop12To24','pop24To36','pop36To48','pop48To60','pop60To72','pop72plus','totalPop','births','deathsNat']
+      ['year','pop0To12','pop12To24','pop24To36','pop36To48','pop48To60','pop60To72','pop72plus','totalPop','births','deathsNat','conquestAdd']
     )
   print(df)
 
@@ -176,6 +194,6 @@ if __name__ == '__main__':
   addRowToTable(table, row)
   for i in range(1,500) :
     row = {}
-    popDist, row = addYear(i, popDist, row, conquestYear = False)
+    popDist, row = addYear(i, popDist, row, conquestYear = isConquestYear(i))
     addRowToTable(table, row)
   print_table(table)
