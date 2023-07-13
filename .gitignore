@@ -1,3 +1,4 @@
 eras_venv/
 __pycache__/
 .pytest_cache/
+*.pem
